@@ -1,0 +1,15 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>cn.thinkinjava</groupId>
+    <artifactId>Tomcat-SourceCode-8.5.34</artifactId>
+    <name>Tomcat 8.5.34</name>
+    <version>1.0</version>
+    <packaging>pom</packaging>
+
+    <modules>
+     <module>apache-tomcat-8.5.34-src</module>
+	</modules>
+</project>
+
