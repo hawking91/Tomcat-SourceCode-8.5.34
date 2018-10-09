@@ -1084,6 +1084,7 @@ public abstract class AbstractEndpoint<S> {
 
     public void init() throws Exception {
         if (bindOnInit) {
+            // 完成端口和地址的绑定监听工作，org.apache.tomcat.util.net.NioEndpoint
             bind();
             bindState = BindState.BOUND_ON_INIT;
         }

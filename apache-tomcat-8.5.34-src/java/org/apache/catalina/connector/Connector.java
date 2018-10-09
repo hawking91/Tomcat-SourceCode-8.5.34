@@ -963,10 +963,14 @@ public class Connector extends LifecycleMBeanBase  {
     @Override
     protected void initInternal() throws LifecycleException {
 
+        // 注册jmx
         super.initInternal();
 
         // Initialize adapter
+        // 初始化Coyote适配器，这个适配器是用于Coyote的Request、Response与HttpServlet的Request、Response适配的
         adapter = new CoyoteAdapter(this);
+
+        // protocolHandler需要指定Adapter用于处理请求
         protocolHandler.setAdapter(adapter);
 
         // Make sure parseBodyMethodsSet has a default
@@ -990,6 +994,7 @@ public class Connector extends LifecycleMBeanBase  {
         }
 
         try {
+            // 初始化ProtocolHandler，这个init不是Lifecycle定义的init，而是ProtocolHandler接口的init
             protocolHandler.init();
         } catch (Exception e) {
             throw new LifecycleException(

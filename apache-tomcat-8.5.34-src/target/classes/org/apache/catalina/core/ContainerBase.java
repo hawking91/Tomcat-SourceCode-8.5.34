@@ -275,6 +275,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
      * The number of threads available to process start and stop events for any
      * children associated with this container.
      */
+    // 默认是1个线程
     private int startStopThreads = 1;
     protected ThreadPoolExecutor startStopExecutor;
 
@@ -736,6 +737,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
         if( log.isDebugEnabled() )
             log.debug("Add child " + child + " " + this);
         synchronized(children) {
+            //  避免重复添加子容器
             if (children.get(child.getName()) != null)
                 throw new IllegalArgumentException("addChild:  Child name '" +
                                                    child.getName() +
@@ -751,6 +753,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
             if ((getState().isAvailable() ||
                     LifecycleState.STARTING_PREP.equals(getState())) &&
                     startChildren) {
+                // 启动添加的子容器
                 child.start();
             }
         } catch (LifecycleException e) {
@@ -892,7 +895,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
 
     }
 
-
+    // 线程获取任务的超时时间是10s，也就是说所有的线程(包括core线程)，超过10s未获取到任务，那么这个线程就会被销毁
     @Override
     protected void initInternal() throws LifecycleException {
         BlockingQueue<Runnable> startStopQueue = new LinkedBlockingQueue<>();
@@ -901,6 +904,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
                 getStartStopThreadsInternal(), 10, TimeUnit.SECONDS,
                 startStopQueue,
                 new StartStopThreadFactory(getName() + "-startStop-"));
+        // 允许core线程超时未获取任务时退出
         startStopExecutor.allowCoreThreadTimeOut(true);
         super.initInternal();
     }
@@ -929,16 +933,20 @@ public abstract class ContainerBase extends LifecycleMBeanBase
         }
 
         // Start our child containers, if any
+        // 把子容器的启动步骤放在线程中处理，默认情况下线程池只有一个线程处理任务队列
         Container children[] = findChildren();
         List<Future<Void>> results = new ArrayList<>();
         for (int i = 0; i < children.length; i++) {
+            // 把StartChild任务丢给线程池处理
             results.add(startStopExecutor.submit(new StartChild(children[i])));
         }
 
         MultiThrowable multiThrowable = new MultiThrowable();
 
+        // 阻塞当前线程，直到子容器start完成
         for (Future<Void> result : results) {
             try {
+                // 阻塞的动作
                 result.get();
             } catch (Throwable e) {
                 log.error(sm.getString("containerBase.threadedStartFailed"), e);
@@ -952,6 +960,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
         }
 
         // Start the Valves in our pipeline (including the basic), if any
+        // 启用Pipeline
         if (pipeline instanceof Lifecycle) {
             ((Lifecycle) pipeline).start();
         }
@@ -960,6 +969,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
         setState(LifecycleState.STARTING);
 
         // Start our thread
+        // 开启ContainerBackgroundProcessor线程用于调用子容器的backgroundProcess方法，默认情况下backgroundProcessorDelay=-1，不会启用该线程
         threadStart();
     }
 

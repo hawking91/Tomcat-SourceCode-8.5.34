@@ -85,7 +85,7 @@ public interface Lifecycle {
 
     // ----------------------------------------------------- Manifest Constants
 
-
+    // 定义各种EVENT事件
     /**
      * The LifecycleEvent type for the "component before init" event.
      */
@@ -178,6 +178,7 @@ public interface Lifecycle {
      *
      * @param listener The listener to add
      */
+    // 注册一个LifecycleEvent listener 到组件中
     public void addLifecycleListener(LifecycleListener listener);
 
 
@@ -188,6 +189,7 @@ public interface Lifecycle {
      *         life cycle. If this component has no listeners registered, a
      *         zero-length array is returned.
      */
+    // 获取所有注册的LifecycleListener
     public LifecycleListener[] findLifecycleListeners();
 
 
@@ -196,6 +198,7 @@ public interface Lifecycle {
      *
      * @param listener The listener to remove
      */
+    // 从component中移除指定的LifecycleListener
     public void removeLifecycleListener(LifecycleListener listener);
 
 
@@ -211,6 +214,7 @@ public interface Lifecycle {
      * @exception LifecycleException if this component detects a fatal error
      *  that prevents this component from being used
      */
+    // 组件在被实例化之后，就开始调用该方法来完成初始化工作
     public void init() throws LifecycleException;
 
     /**
@@ -239,6 +243,7 @@ public interface Lifecycle {
      * @exception LifecycleException if this component detects a fatal error
      *  that prevents this component from being used
      */
+    // 在组件投入使用之前调用该方法，先后会发出以下事件：BEFORE_START_EVENT、START_EVENT、AFTER_START_EVENT
     public void start() throws LifecycleException;
 
 
@@ -273,6 +278,7 @@ public interface Lifecycle {
      * @exception LifecycleException if this component detects a fatal error
      *  that needs to be reported
      */
+    // 使组件停止工作
     public void stop() throws LifecycleException;
 
     /**
@@ -286,6 +292,7 @@ public interface Lifecycle {
      * @exception LifecycleException if this component detects a fatal error
      *  that prevents this component from being used
      */
+    // 销毁组件时被调用
     public void destroy() throws LifecycleException;
 
 
@@ -305,6 +312,7 @@ public interface Lifecycle {
      *
      * @return The name of the current component state.
      */
+    // 获取state的文字说明
     public String getStateName();
 
 

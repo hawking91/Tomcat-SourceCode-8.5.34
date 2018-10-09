@@ -434,12 +434,16 @@ public class HostConfig implements LifecycleListener {
 
         File appBase = host.getAppBaseFile();
         File configBase = host.getConfigBaseFile();
+        // 过滤出 webapp 要部署应用的目录
         String[] filteredAppPaths = filterAppPaths(appBase.list());
         // Deploy XML descriptors from configBase
+        // 部署 xml 描述文件
         deployDescriptors(configBase, configBase.list());
         // Deploy WARs
+        // 解压 war 包，但是这里还不会去启动应用
         deployWARs(appBase, filteredAppPaths);
         // Deploy expanded folders
+        // 处理已经存在的目录，前面解压的 war 包不会再行处理
         deployDirectories(appBase, filteredAppPaths);
 
     }
@@ -1048,7 +1052,7 @@ public class HostConfig implements LifecycleListener {
 
                 if (isServiced(cn.getName()) || deploymentExists(cn.getName()))
                     continue;
-
+                //  DeployDirectory 任务很简单，只是调用 `HostConfig#deployDirectory(cn, dir)`
                 results.add(es.submit(new DeployDirectory(this, cn, dir)));
             }
         }
@@ -1069,6 +1073,13 @@ public class HostConfig implements LifecycleListener {
      * @param cn The context name
      * @param dir The path to the root folder of the weapp
      */
+    /**
+     * 看看 deployDirectory 的具体逻辑，分为以下几个步骤：
+     *
+     * 1. 使用 digester，或者反射实例化 StandardContext
+     * 2. 实例化 ContextConfig，并且为 Context 容器注册事件监听器，和 StandardHost 的套路一样，借助 XXXConfig 完成容器的启动、停止工作
+     * 3. 将当前 Context 实例作为子容器添加到 Host 容器中，添加子容器的逻辑在 ContainerBase 中已经实现了，如果当前 Container 的状态是 STARTING_PREP 并且 startChildren 为 true，则还会启动子容器
+    */
     protected void deployDirectory(ContextName cn, File dir) {
 
 
@@ -1091,6 +1102,7 @@ public class HostConfig implements LifecycleListener {
         boolean deployThisXML = isDeployThisXML(dir, cn);
 
         try {
+            // 实例化 StandardContext
             if (deployThisXML && xml.exists()) {
                 synchronized (digesterLock) {
                     try {
@@ -1129,6 +1141,7 @@ public class HostConfig implements LifecycleListener {
                 context = (Context) Class.forName(contextClass).getConstructor().newInstance();
             }
 
+            // 实例化 ContextConfig，作为 LifecycleListener 添加到 Context 容器中，这和 StandardHost 的套路一样，都是使用 XXXConfig
             Class<?> clazz = Class.forName(host.getConfigClass());
             LifecycleListener listener = (LifecycleListener) clazz.getConstructor().newInstance();
             context.addLifecycleListener(listener);
@@ -1137,6 +1150,7 @@ public class HostConfig implements LifecycleListener {
             context.setPath(cn.getPath());
             context.setWebappVersion(cn.getVersion());
             context.setDocBase(cn.getBaseName());
+            // 实例化 Context 之后，为 Host 添加子容器
             host.addChild(context);
         } catch (Throwable t) {
             ExceptionUtils.handleThrowable(t);

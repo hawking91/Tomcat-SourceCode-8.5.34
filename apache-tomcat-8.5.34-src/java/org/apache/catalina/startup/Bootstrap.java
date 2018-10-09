@@ -252,32 +252,41 @@ public final class Bootstrap {
      * Initialize daemon.
      * @throws Exception Fatal initialization error
      */
+    // 首先初始化commonLoader、catalinaLoader、sharedLoader，默认情况下这三个是相同的实例，用于加载不同的资源。然后，使用反射实例化Catalina，设置其parentClassLoader为sharedLoader
     public void init() throws Exception {
 
+        // 初始化commonLoader、catalinaLoader、sharedLoader，关于ClassLoader的后面再单独分析
         initClassLoaders();
 
+        // 将设置线程上下文类加载器.
         Thread.currentThread().setContextClassLoader(catalinaLoader);
 
+        // 线程安全的加载 class  负责加载Tomcat容器所需的class 检查是否安全, 不安全直接结束
         SecurityClassLoad.securityClassLoad(catalinaLoader);
 
         // Load our startup class and call its process() method
         if (log.isDebugEnabled())
             log.debug("Loading startup class");
+
+        // 反射方法实例化Catalina，后面初始化Catalina也用了很多反射，不知道意图是什么
         Class<?> startupClass = catalinaLoader.loadClass("org.apache.catalina.startup.Catalina");
         Object startupInstance = startupClass.getConstructor().newInstance();
 
         // Set the shared extensions class loader
         if (log.isDebugEnabled())
             log.debug("Setting startup class properties");
+
+        // 反射调用setParentClassLoader方法，设置其parentClassLoader为sharedLoader
         String methodName = "setParentClassLoader";
         Class<?> paramTypes[] = new Class[1];
-        paramTypes[0] = Class.forName("java.lang.ClassLoader");
-        Object paramValues[] = new Object[1];
-        paramValues[0] = sharedLoader;
+        paramTypes[0] = Class.forName("java.lang.ClassLoader");// 创建一个抽象类类加载器类对象
+        Object paramValues[] = new Object[1];// 创建一个对象数组
+        paramValues[0] = sharedLoader;// 对象数组中放入分享类加载器
         Method method =
-            startupInstance.getClass().getMethod(methodName, paramTypes);
-        method.invoke(startupInstance, paramValues);
+            startupInstance.getClass().getMethod(methodName, paramTypes);// 从Catalina 类获取setParentClassLoader方法对象
+        method.invoke(startupInstance, paramValues);//  调用该方法,传入 sharedLoader , Catalina.parentClassLoader = sharedLoader
 
+        // 引用Catalina实例
         catalinaDaemon = startupInstance;
 
     }
@@ -286,6 +295,7 @@ public final class Bootstrap {
     /**
      * Load daemon.
      */
+    // 此方法通过反射调用了org.apache.catalina.startup.Catalina#load方法，那我们就看看Catalina的load方法
     private void load(String[] arguments)
         throws Exception {
 
@@ -456,16 +466,21 @@ public final class Bootstrap {
      */
     public static void main(String args[]) {
 
+        //  daemon就是Bootstrap
         if (daemon == null) {
+            System.out.println("<<<<<———— Tomcat 8.5.34 正在启动 ————>>>>>");
             // Don't set daemon until init() has completed
+            // 初始化了自举类的实例
             Bootstrap bootstrap = new Bootstrap();
             try {
+                // 对BootStrap实例进行了初始化
                 bootstrap.init();
             } catch (Throwable t) {
                 handleThrowable(t);
                 t.printStackTrace();
                 return;
             }
+            // 将实例赋值给了daemon
             daemon = bootstrap;
         } else {
             // When running as a service the call to stop will be on a new
@@ -488,6 +503,7 @@ public final class Bootstrap {
                 args[args.length - 1] = "stop";
                 daemon.stop();
             } else if (command.equals("start")) {
+                // 首先调用了BootStrap的load方法，然后调用了start方法。
                 daemon.setAwait(true);
                 daemon.load(args);
                 daemon.start();

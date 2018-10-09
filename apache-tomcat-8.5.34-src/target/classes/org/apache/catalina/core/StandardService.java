@@ -417,20 +417,24 @@ public class StandardService extends LifecycleMBeanBase implements Service {
         setState(LifecycleState.STARTING);
 
         // Start our defined Container first
+        // 启动Engine
         if (engine != null) {
             synchronized (engine) {
                 engine.start();
             }
         }
 
+        // 启动Executor线程池
         synchronized (executors) {
             for (Executor executor: executors) {
                 executor.start();
             }
         }
 
+        // 启动MapperListener
         mapperListener.start();
 
+        // 启动Connector
         // Start our defined Connectors second
         synchronized (connectorsLock) {
             for (Connector connector: connectors) {
@@ -528,13 +532,16 @@ public class StandardService extends LifecycleMBeanBase implements Service {
     @Override
     protected void initInternal() throws LifecycleException {
 
+        // 往jmx中注册自己
         super.initInternal();
 
+        // 初始化Engine
         if (engine != null) {
             engine.init();
         }
 
         // Initialize any Executors
+        // 存在Executor线程池，则进行初始化，默认是没有的
         for (Executor executor : findExecutors()) {
             if (executor instanceof JmxEnabled) {
                 ((JmxEnabled) executor).setDomain(getDomain());
@@ -543,9 +550,11 @@ public class StandardService extends LifecycleMBeanBase implements Service {
         }
 
         // Initialize mapper listener
+        // 暂时不知道这个MapperListener的作用,但是在Tomcat7及之前的版本中Mapper都是由Connector维护的，在8之后才由Service维护，因为Service本来就是用于维护Connector和Container
         mapperListener.init();
 
         // Initialize our defined Connectors
+        // 初始化Connector，而Connector又会对ProtocolHandler进行初始化，开启应用端口的监听
         synchronized (connectorsLock) {
             for (Connector connector : connectors) {
                 try {
