@@ -5032,6 +5032,7 @@ public class StandardContext extends ContainerBase
                 log.debug("Configuring default Resources");
 
             try {
+                // 实例化 WebResourceRoot，默认实现类是 StandardRoot，用于读取 webapp 的文件资源
                 setResources(new StandardRoot(this));
             } catch (IllegalArgumentException e) {
                 log.error(sm.getString("standardContext.resourcesInit"), e);
@@ -5099,6 +5100,7 @@ public class StandardContext extends ContainerBase
         try {
             if (ok) {
                 // Start our subordinate components, if any
+                // 实例化 Loader 对象，Loader 是 tomcat 对于 ClassLoader 的封装，用于支持在运行期间热加载 class
                 Loader loader = getLoader();
                 if (loader instanceof Lifecycle) {
                     ((Lifecycle) loader).start();
@@ -5151,6 +5153,7 @@ public class StandardContext extends ContainerBase
                 }
 
                 // Notify our interested LifecycleListeners
+                // 发出 CONFIGURE_START_EVENT 事件，ContextConfig 会处理该事件，主要目的是从 webapp 中读取 servlet 相关的 Listener、Servlet、Filter 等
                 fireLifecycleEvent(Lifecycle.CONFIGURE_START_EVENT, null);
 
                 // Start our child containers, if not already started
@@ -5183,6 +5186,7 @@ public class StandardContext extends ContainerBase
                             ok = false;
                         }
                     } else {
+                        // 实例化 Sesssion 管理器，默认使用 StandardManager
                         contextManager = new StandardManager();
                     }
                 }
@@ -5252,6 +5256,7 @@ public class StandardContext extends ContainerBase
             }
 
             // Configure and call application event listeners
+            // 调用 listenerStart，实例化 servlet 相关的各种 Listener，并且调用 ServletContextListener
             if (ok) {
                 if (!listenerStart()) {
                     log.error(sm.getString("standardContext.listenerFail"));

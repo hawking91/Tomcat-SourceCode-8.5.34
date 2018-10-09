@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ExternalStorageConfigurationManager" enabled="true" />
+  <component name="Kotlin2JsCompilerArguments">
+    <option name="sourceMapEmbedSources" />
+    <option name="sourceMapPrefix" />
+  </component>
+  <component name="MavenProjectsManager">
+    <option name="originalFiles">
+      <list>
+        <option value="$PROJECT_DIR$/pom.xml" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectDictionaryState">
+    <dictionary name="vincent" />
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" project-jdk-name="1.8" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/out" />
+  </component>
+  <component name="libraryTable">
+    <library name="java">
+      <CLASSES />
+      <JAVADOC />
+      <SOURCES>
+        <root url="file://$PROJECT_DIR$/../SpringiA4_SourceCode/Chapter_01/knight/src/main/java" />
+        <root url="file://$PROJECT_DIR$/../SpringiA4_SourceCode/Chapter_01/knight/src/test/java" />
+      </SOURCES>
+    </library>
+    <library name="mystudyroject">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/../mystudyroject" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="file://$PROJECT_DIR$/../mystudyroject/src" />
+      </SOURCES>
+    </library>
+  </component>
+</project>

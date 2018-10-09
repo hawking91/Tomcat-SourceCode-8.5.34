@@ -295,6 +295,7 @@ public class ContextConfig implements LifecycleListener {
         }
 
         // Process the event that has occurred
+        // 发出 CONFIGURE_START_EVENT 事件
         if (event.getType().equals(Lifecycle.CONFIGURE_START_EVENT)) {
             configureStart();
         } else if (event.getType().equals(Lifecycle.BEFORE_START_EVENT)) {
@@ -1091,12 +1092,14 @@ public class ContextConfig implements LifecycleListener {
          *   those in JARs excluded from an absolute ordering) need to be
          *   scanned to check if they match.
          */
+        // 对 web.xml 进行解析
         WebXmlParser webXmlParser = new WebXmlParser(context.getXmlNamespaceAware(),
                 context.getXmlValidation(), context.getXmlBlockExternal());
 
         Set<WebXml> defaults = new HashSet<>();
         defaults.add(getDefaultWebXmlFragment(webXmlParser));
 
+        // 创建 WebXml实例，并解析 web.xml 文件
         WebXml webXml = createWebXml();
 
         // Parse context level web.xml
@@ -1130,6 +1133,7 @@ public class ContextConfig implements LifecycleListener {
             // @HandlesTypes matches
             Map<String,JavaClassCacheEntry> javaClassCache = new HashMap<>();
 
+            // 如果没有 web.xml 文件，tomcat 会先扫描 WEB-INF/classes 目录下面的 class 文件
             if (ok) {
                 WebResource[] webResources =
                         context.getResources().listResources("/WEB-INF/classes");
@@ -1140,6 +1144,7 @@ public class ContextConfig implements LifecycleListener {
                     if ("META-INF".equals(webResource.getName())) {
                         continue;
                     }
+                    //
                     processAnnotationsWebResource(webResource, webXml,
                             webXml.isMetadataComplete(), javaClassCache);
                 }
@@ -1182,6 +1187,7 @@ public class ContextConfig implements LifecycleListener {
         } else {
             webXml.merge(defaults);
             convertJsps(webXml);
+            // 配置信息读取完毕之后，会把 WebXml 装载的配置赋值给 ServletContext
             configureContext(webXml);
         }
 
@@ -1203,6 +1209,8 @@ public class ContextConfig implements LifecycleListener {
                     resourceJars.add(fragment);
                 }
             }
+
+            //  tomcat 还会加载 WEB-INF/classes/META-INF/resources/、WEB-INF/lib/xxx.jar/META-INF/resources/ 的静态资源
             processResourceJARs(resourceJars);
             // See also StandardContext.resourcesStart() for
             // WEB-INF/classes/META-INF/resources configuration
@@ -1255,12 +1263,16 @@ public class ContextConfig implements LifecycleListener {
         for (ErrorPage errorPage : webxml.getErrorPages().values()) {
             context.addErrorPage(errorPage);
         }
+
+        // 设置 Filter 定义
         for (FilterDef filter : webxml.getFilters().values()) {
             if (filter.getAsyncSupported() == null) {
                 filter.setAsyncSupported("false");
             }
             context.addFilterDef(filter);
         }
+
+        // 设置 FilterMapping，即 Filter 的 URL 映射
         for (FilterMap filterMap : webxml.getFilterMappings()) {
             context.addFilterMap(filterMap);
         }
@@ -1312,6 +1324,8 @@ public class ContextConfig implements LifecycleListener {
         for (ContextService service : webxml.getServiceRefs().values()) {
             context.getNamingResources().addService(service);
         }
+
+        // 往 Context 中添加子容器 Wrapper，即 Servlet
         for (ServletDef servlet : webxml.getServlets().values()) {
             Wrapper wrapper = context.createWrapper();
             // Description is ignored
@@ -1359,6 +1373,7 @@ public class ContextConfig implements LifecycleListener {
                         servlet.getAsyncSupported().booleanValue());
             }
             wrapper.setOverridable(servlet.isOverridable());
+            // Wrapper 子容器添加到 StandardContext 容器中
             context.addChild(wrapper);
         }
         for (Entry<String, String> entry :
@@ -1669,6 +1684,7 @@ public class ContextConfig implements LifecycleListener {
      * @param fragments The set of fragments that will be scanned for
      *  static resources
      */
+    // fragments 包括了 WEB-INF/classes、WEB-INF/lib/xxx.jar
     protected void processResourceJARs(Set<WebXml> fragments) {
         for (WebXml fragment : fragments) {
             URL url = fragment.getURL();
@@ -1939,6 +1955,7 @@ public class ContextConfig implements LifecycleListener {
         } else if (webResource.isFile() &&
                 webResource.getName().endsWith(".class")) {
             try (InputStream is = webResource.getInputStream()) {
+                // 通过解析字节码文件，获取对应类的一些信息
                 processAnnotationsStream(is, fragment, handlesTypesOnly, javaClassCache);
             } catch (IOException e) {
                 log.error(sm.getString("contextConfig.inputStreamWebResource",
@@ -2039,8 +2056,12 @@ public class ContextConfig implements LifecycleListener {
             boolean handlesTypesOnly, Map<String,JavaClassCacheEntry> javaClassCache)
             throws ClassFormatException, IOException {
 
+        // is 即 class 字节码文件的 IO 流
         ClassParser parser = new ClassParser(is);
+
+        // 使用 JavaClass 封装 class 相关的信息
         JavaClass clazz = parser.parse();
+        // tomcat 对字节码的处理是由 org.apache.tomcat.util.bcel 包完成
         checkHandlesTypes(clazz, javaClassCache);
 
         if (handlesTypesOnly) {
